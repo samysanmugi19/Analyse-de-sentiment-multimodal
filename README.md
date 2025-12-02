@@ -18,7 +18,8 @@ Ce projet combine plusieurs modalités (vidéo, audio et texte) pour prédire le
 
  analyse_sentiment_multimodale.ipynb : Modèles entraînés et checkpoints.
  label.csv : fichiers contenant les labels
- bert.py : la class BertTextEncoder
+ bert.py : la class BertTextEncoder avec bert-base-uncased
+ bertemotionsavani.py : la class BertTextEncoder avec ayoubkirouane/BERT-Emotions-Classifier
 
 
 Installez les bibliothèques requises avec pip :
