@@ -438,6 +438,7 @@ Ces résultats sont **inférieurs** à ceux de la baseline BERT-base-uncased
 >  Le code complet de cette variante RoBERTa (encodage + alignement + entraînement)  
 > est disponible dans le notebook du projet.
 
+### Autre variante avec ayoubkirouane/BERT-Emotions-Classifier
 ### 1. Meilleur encodeur texte
 
 - Baseline : `bert-base-uncased` (BERT généraliste).
