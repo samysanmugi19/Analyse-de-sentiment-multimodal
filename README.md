@@ -2,7 +2,7 @@
 
 ### **Description**
 Ce projet combine plusieurs modalités (vidéo, audio et texte) pour prédire le sentiment en utilisant des modèles d'apprentissage profond, inspirés de DEVA. L'objectif est d'analyser les émotions exprimées dans les données multimédia en fusionnant les signaux textuels, audio et visuels. Le système utilise des modèles basés sur BERT pour l'encodage du texte, OpenSMILE pour les caractéristiques audio et OpenFace pour l'analyse des expressions faciales. Le dataset utilisé et CMU - MOSI (Segmented)
-# **Prérequis**
+## Prérequis
 
 *   Python 3.8+
 *   PyTorch
@@ -17,6 +17,7 @@ Ce projet combine plusieurs modalités (vidéo, audio et texte) pour prédire le
 **Structure du Répertoire**
 
  analyse_sentiment_multimodale.ipynb : Modèles entraînés et checkpoints.
+ label.csv : fichiers contenant les labels
  bert.py : la class BertTextEncoder
 
 
@@ -56,8 +57,8 @@ Le fichier `label.csv` contient les colonnes suivantes :
 - **mode** : Le mode de l'échantillon, typiquement **train** ou **test**, pour l'assignation à l'ensemble d'entraînement ou de test.
 
 
-# **Prétraitement**
-## **Traitement du video**
+## **Prétraitement**
+### **Traitement du video**
 Pour l'analyse des expressions faciales, nous utilisons OpenFace pour extraire les unités d'action faciale à partir des images extraites des vidéos.
 
 Pour exécuter OpenFace, téléchargez et exécutez le logiciel :
@@ -135,100 +136,8 @@ Nous traitons le texte avec BERT, en utilisant des modèles pré-entraînés pou
 
 5. **Fusion des embeddings**
    - Après avoir généré les embeddings pour chaque modalité (texte, audio et vidéo), les embeddings sont fusionnés pour être utilisés dans le modèle multimodal.
-  
-   - ## **Entraînement du Modèle**
-   ### Chargement des données
 
-Les données utilisées dans ce projet sont stockées sous forme de fichiers `.pkl` pour les embeddings des trois modalités : texte, audio et vidéo. Ces fichiers sont chargés à l'aide de la fonction `load_pkl()` qui lit les fichiers `.pkl` et récupère les embeddings ainsi que les identifiants (IDs) associés.
-
-Les données sont ensuite extraites et préparées pour l'entraînement du modèle multimodal :
-
-- **Texte** : Les embeddings textuels sont chargés .
-- **Audio** : Les embeddings audio sont chargés `.
-- **Vidéo** : Les embeddings vidéo sont chargés `.
-
-Les identifiants (IDs) associés à chaque modalité sont également extraits et utilisés pour l'alignement avec les IDs du fichier CSV des labels.
-
-### Alignement des données multimodales
-
-Les embeddings de chaque modalité (texte, audio et vidéo) sont alignés avec les IDs correspondants à partir du fichier CSV des labels. Un **projecteur d'embeddings** est utilisé pour transformer chaque ensemble d'embeddings en séquences alignées, permettant ainsi d'avoir des données cohérentes pour l'entraînement du modèle.
-
-La classe `AudioVisualFeatureProjector` permet d'aligner les embeddings audio, vidéo et texte en utilisant les IDs du CSV. Les données sont ensuite alignées avec les IDs du CSV, garantissant que chaque échantillon de données multimodales (texte, audio, vidéo) correspond à une étiquette spécifique.
-
-### Création du Dataset pour l'entraînement
-
-Un dataset multimodal est créé en combinant les embeddings alignés de chaque modalité avec les étiquettes issues du fichier CSV. Ce dataset est utilisé pour entraîner, valider et tester le modèle.
-
-Les données sont divisées en trois ensembles :
-
-- **Ensemble d'entraînement** : 70% des données
-- **Ensemble de validation** : 15% des données
-- **Ensemble de test** : 15% des données
-
-La division est réalisée à l'aide de la fonction `train_test_split()` de Scikit-learn, permettant ainsi de séparer les données de manière aléatoire tout en préservant la distribution des labels.
-
-### Statistiques finales sur les données
-
-Après avoir préparé les données, nous vérifions les dimensions des embeddings et leur distribution sur les ensembles d'entraînement, de validation et de test. Les dimensions des embeddings sont affichées, et la répartition des labels (positifs et négatifs) est également vérifiée pour chaque ensemble.
-
-Les résultats des statistiques finales sont les suivants :
-
-- Nombre d'échantillons dans chaque ensemble (train, val, test).
-- Dimensions des embeddings pour chaque modalité (texte, audio, vidéo).
-- Distribution des labels dans chaque ensemble.
-
-
-# Définir les chemins
-$exePath = "E:\OpenFace_2.2.0_win_x86\OpenFace_2.2.0_win_x86\FeatureExtraction.exe"
-$videoFolder = "E:\Raw\Video\Segmented"  # Répertoire contenant les vidéos
-$outDir = "E:\OpenFace_Results\processed"  # Répertoire de sortie
-
-# Créer le répertoire de sortie s'il n'existe pas déjà
-if (-not (Test-Path -Path $outDir)) {
-    New-Item -Path $outDir -ItemType Directory
-}
-
-# Récupérer tous les fichiers vidéo (formats .mp4, .avi, .mov)
-$videoFiles = Get-ChildItem -Path $videoFolder -Recurse -File | Where-Object { $_.Extension -in @(".mp4", ".avi", ".mov") }
-
-# Boucle sur chaque vidéo et exécution de FeatureExtraction
-foreach ($video in $videoFiles) {
-    $videoPath = $video.FullName
-    Write-Host "Processing: $videoPath"
-    
-    # Exécuter FeatureExtraction sur chaque vidéo
-    & $exePath -f $videoPath -out_dir $outDir
-}
-
-Write-Host "Traitement terminé !"
-
-À partir des fichiers .csv générés par OpenFace (une ligne par frame, une colonne par AU), nous :
-
-
-1.   détectons les Action Units (AUs) actives,
-2.   sélectionnons les AUs les plus importantes,
-3.   convertissons ces AUs en texte lisible,
-4.   générons un identifiant unique pour chaque segment,
-5.   sauvegardons l’ensemble dans un fichier vision_text.pkl.
-
-Ce fichier sera ensuite utilisé dans la modalité Vision de notre modèle multimodal.
-
-## **Traitement du audio**
-
-Dans ce projet, nous extrayons l'audio des vidéos à l'aide de **MoviePy**, une bibliothèque Python qui permet de traiter et de manipuler les fichiers multimédia. Ensuite, nous utilisons **OpenSMILE**, un outil de traitement audio, pour extraire plusieurs caractéristiques importantes des fichiers audio, notamment :
-
-- **Loudness** : Mesure de l'intensité du son.
-- **Jitter** : Variation de la fréquence fondamentale.
-- **Shimmer** : Variation de l'amplitude du signal audio.
-- **F0 (Fréquence fondamentale)** : Valeur de la fréquence fondamentale du signal.
-
-Ces caractéristiques sont ensuite traitées et classées en trois niveaux (faible, normal, élevé) pour chaque dimension sonore. Ces descriptions sont ensuite converties en texte pour chaque vidéo. Et puis on génère l'id pour chaque segment
-
-Le code pour cette extraction et transformation des caractéristiques audio est présent dans le notebook **`analyse_sentiment_multiomodal.ipynb`**, où chaque étape est détaillée et appliquée aux fichiers audio des vidéos.
-
-## **Traitement du Texte**
-Nous traitons le texte avec BERT, en utilisant des modèles pré-entraînés pour la tokenisation et la génération des embeddings. Ces embeddings sont utilisés pour prédire le sentiment du texte.
-
+## **Entraînement du Modèle**
 ### Chargement des données
 
 Les données utilisées dans ce projet sont stockées sous forme de fichiers `.pkl` pour les embeddings des trois modalités : texte, audio et vidéo. Ces fichiers sont chargés à l'aide de la fonction `load_pkl()` qui lit les fichiers `.pkl` et récupère les embeddings ainsi que les identifiants (IDs) associés.
@@ -269,13 +178,14 @@ Les résultats des statistiques finales sont les suivants :
 - Dimensions des embeddings pour chaque modalité (texte, audio, vidéo).
 - Distribution des labels dans chaque ensemble.
 
-## 🔥 Entraînement du Modèle Multimodal (DEVANet)
+
+## Entraînement du Modèle Multimodal (DEVANet)
 
 Cette section décrit comment le modèle multimodal a été entraîné, régularisé et évalué après l’alignement des embeddings texte–audio–vidéo.
 
 ---
 
-### 1️⃣ Normalisation des données
+### Normalisation des données
 
 Avant l’entraînement, les embeddings de chaque modalité (Texte, Audio, Vidéo) sont **normalisés** en utilisant :
 
@@ -286,7 +196,7 @@ Cette étape stabilise l’entraînement et permet au modèle de converger plus 
 
 ---
 
-### 2️⃣ Dataset avec augmentation
+### Dataset avec augmentation
 
 Pour rendre le modèle plus robuste, une **augmentation légère** est appliquée pendant l’entraînement :
 
@@ -294,11 +204,11 @@ Pour rendre le modèle plus robuste, une **augmentation légère** est appliqué
 - probabilité de 50%
 - standard deviation du bruit = **0.05**
 
-➡️ Cela simule des variations naturelles (bruit audio, micro-expression instable, variation textuelle).
+ Cela simule des variations naturelles (bruit audio, micro-expression instable, variation textuelle).
 
 ---
 
-### 3️⃣ Architecture : Cross-Modal Attention
+###  Architecture : Cross-Modal Attention
 
 Le cœur du modèle repose sur une **attention croisée robuste** qui permet au texte d’aller chercher des informations pertinentes dans :
 
@@ -307,13 +217,13 @@ Le cœur du modèle repose sur une **attention croisée robuste** qui permet au 
 
 L’architecture utilisée comprend :
 
-#### 🔹 RobustCrossModalAttention  
+####  RobustCrossModalAttention  
 Un module d'attention qui calcule :
 - Query (texte)
 - Keys/Values (audio ou vidéo)
 - Matrice d’attention + dropout
 
-#### 🔹 SimplifiedMFU  
+####  SimplifiedMFU  
 (Multimodal Fusion Unit simplifiée)
 
 - effectue une double attention croisée T→A et T→V  
@@ -321,7 +231,7 @@ Un module d'attention qui calcule :
 - concatène les modalités texte/audio/vidéo  
 - applique une couche fully connected + LayerNorm
 
-#### 🔹 DEVANet Régularisé
+####  DEVANet Régularisé
 
 Le modèle final contient :
 
@@ -335,7 +245,7 @@ Régularisation utilisée :
 
 ---
 
-### 4️⃣ Fonction de perte hybride
+###  Fonction de perte hybride
 
 Nous utilisons une **loss hybride** spécialement conçue pour les labels MOSI :
 
@@ -350,14 +260,14 @@ Pour la classification binaire :
 
 Label smoothing = **0.1**
 
-➡️ Cela stabilise l’apprentissage lorsque les labels sont bruités.
+ Cela stabilise l’apprentissage lorsque les labels sont bruités.
 
 La loss finale :  
 **0.5 × MSE + 0.5 × BCE_smooth**
 
 ---
 
-### 5️⃣ Métriques d’évaluation
+###  Métriques d’évaluation
 
 Comme MOSI est un dataset **continu**, mais souvent évalué en binaire, nous utilisons :
 
@@ -370,7 +280,7 @@ Comme MOSI est un dataset **continu**, mais souvent évalué en binaire, nous ut
 
 ---
 
-### 6️⃣ Entraînement
+###  Entraînement
 
 Hyperparamètres clés :
 
@@ -385,7 +295,7 @@ L’entraînement inclut un **early stopping**, basé sur la meilleure Acc-2 en 
 
 ---
 
-### 7️⃣ Évaluation finale et sauvegarde
+###  Évaluation finale et sauvegarde
 
 À la fin de l’entraînement :
 
@@ -410,7 +320,7 @@ Ce modèle utilise notre version simplifiée de **DEVANet** avec attention crois
 
 L’entraînement s’est arrêté automatiquement grâce à l’**early stopping** à l’epoch 21.
 
-### 🔥 Performances finales sur le Test Set
+###  Performances finales sur le Test Set
 
 | Metric | Score |
 |--------|--------|
@@ -421,13 +331,15 @@ L’entraînement s’est arrêté automatiquement grâce à l’**early stoppin
 
 ➡️ **Acc-2** et **F1-Weighted** au-dessus de **82%**.
 
-### 📌 Observations importantes
+###  Observations importantes
 
 - Le modèle apprend rapidement, atteignant une précision binaire de **94%** sur le train set avant régularisation.
 - Les résultats en validation tournent autour de **0.73–0.75**, ce qui est cohérent avec MOSI.
 - Le test set montre une bonne généralisation (Acc-2 ≈ 0.8273).
 - Le **MAE ≈ 0.99** montre que le modèle reste stable pour de la régression émotionnelle continue.
 - La **corrélation de Pearson ≈ 0.74** indique une bonne cohérence entre labels réels et prédictions.
+
+- Pipeline:
 
                    +--------------------------------+
                    |   1. Téléchargement des données |
@@ -500,7 +412,7 @@ L’entraînement s’est arrêté automatiquement grâce à l’**early stoppin
         +--------------------------------------------------------+
 
   
-## 🔁 Variante RoBERTa (expérimentation supplémentaire)
+##  Variante RoBERTa (expérimentation supplémentaire)
 
 En complément de la baseline avec **BERT-base-uncased**, nous avons testé une variante où :
 
@@ -512,7 +424,7 @@ En complément de la baseline avec **BERT-base-uncased**, nous avons testé une 
 
 L’entraînement et l’évaluation sont identiques à la baseline (même split MOSI, mêmes métriques).
 
-### 📊 Résultats (RoBERTa)
+### Résultats (RoBERTa)
 
 Sur le **test set**, nous obtenons environ :
 
@@ -522,7 +434,7 @@ Sur le **test set**, nous obtenons environ :
 Ces résultats sont **inférieurs** à ceux de la baseline BERT-base-uncased  
 (Acc-2 ≈ 0.83), donc **la baseline BERT** reste notre modèle de référence officiel.
 
-> 💡 Le code complet de cette variante RoBERTa (encodage + alignement + entraînement)  
+>  Le code complet de cette variante RoBERTa (encodage + alignement + entraînement)  
 > est disponible dans le notebook du projet.
 
 ### 1. Meilleur encodeur texte
@@ -575,13 +487,13 @@ Ces résultats sont **inférieurs** à ceux de la baseline BERT-base-uncased
 - Normalisation systématique des embeddings texte/audio/vidéo à partir des statistiques du train.
 - Fixation d’un **seed global (42)** pour PyTorch, NumPy et Python, afin de garantir la réplicabilité des résultats.
 
-## 📊 Résultats finaux sur le Test Set
+##  Résultats finaux sur le Test Set
 
 Après l’entraînement du modèle DEVANet optimisé et la sélection du meilleur checkpoint
 (basé sur la métrique Acc-2 en validation), nous avons évalué les performances sur le
 jeu de test MOSI.
 
-### 🧪 Métriques obtenues
+###  Métriques obtenues
 
 | Métrique                 | Valeur |
 |--------------------------|--------|
@@ -590,7 +502,7 @@ jeu de test MOSI.
 | **MAE** (erreur absolue moyenne) | **0.7624** |
 | **Corrélation de Pearson** | **0.7757** |
 
-### ✅ Interprétation des résultats
+### Interprétation des résultats
 
 - **Acc-2 = 83.63%** → Le modèle discrimine efficacement les sentiments *positifs vs négatifs*.  
 - **F1-weighted ≈ 0.836** → Les performances sont équilibrées malgré le déséquilibre de classes.  
@@ -684,3 +596,5 @@ Ces résultats montrent que **notre version optimisée de DEVANet** (attention m
     |  - Sauvegarde : devanet_optimized_final.pth               |
     |    → inclut normalisation + métriques + poids            |
     +----------------------------------------------------------+
+
+Auteurs: SAMY Sanmugi, REZOUKI Salma, MONGA Célia, MACHICHI Imane
